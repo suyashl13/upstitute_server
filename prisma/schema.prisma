@@ -13,10 +13,10 @@ datasource db {
 model User {
   id              String          @unique @default(uuid())
   name            String
-  email           String
-  phone           String          @db.VarChar(12)
+  email           String          @unique
+  phone           String          @unique @db.VarChar(12)
   password        String
-  role            Int
+  role            Int //           {1 : 'Admin', 2: 'Student', 3: 'Teacher'}
   is_active       Boolean
   student_details StudentDetails? @relation(fields: [student_id], references: [id])
   teacher_details TeacherDetails? @relation(fields: [teacher_id], references: [id])
