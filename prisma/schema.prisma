@@ -23,6 +23,7 @@ model User {
   student_id      String?         @unique
   teacher_id      String?         @unique
   created_at      DateTime        @default(now())
+  Token           Token?
 }
 
 model StudentDetails {
@@ -114,4 +115,13 @@ model CourseEnrollment {
   end_date   DateTime
 
   created_at DateTime @default(now())
+}
+
+model Token {
+  id    String @unique @default(uuid())
+  token String @unique @default(uuid())
+
+  user    User   @relation(fields: [user_id], references: [id])
+  user_id String @unique
+  device String?
 }
