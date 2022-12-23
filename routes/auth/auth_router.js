@@ -2,7 +2,7 @@ const authRouter = require('express').Router()
 const bcrypt = require('bcrypt');
 const redisClient = require('../../config/redis_config');
 const { v4 } = require('uuid');
-const { prisma } = require('../../services/prisma_db');
+const { prisma } = require('../../singleton/prisma_db');
 const jsonwebtoken = require('jsonwebtoken');
 
 /**
@@ -16,20 +16,33 @@ authRouter.post('/login', async (req, res, next) => {
         const user = await prisma.user.findUnique({ where: { email: email } })
         const authResult = await bcrypt.compare(password, user.password);
         delete user['password'];
-        if (authResult) {            
+        if (authResult) {
             const token = await prisma.token.create({
-                data : {
+                data: {
                     device: req.header['User-Agent'],
                     user_id: user.id,
                 },
+                include: {
+                    user: true
+                }
             });
-            token['user'] = user;
-            const jwt  = jsonwebtoken.sign(token, process.env.SECRET_KEY);
-            res.json({jwt: jwt});
+
+            const jwt = jsonwebtoken.sign(token, process.env.SECRET_KEY);
+
+            try {
+                await redisClient.json.set(token.token, '.', token);
+                await redisClient.expire(token.token ,60 * 60)
+            } catch (error) {
+                console.error("Unable to cache current auth token");
+            }
+
+            res
+                .cookie('Authorization', `Bearer ${jwt}`, { httpOnly: true })
+                .json({ jwt: jwt });
         } else
             res
                 .status(400)
-                .json({err: 'Invalid password'})
+                .json({ err: 'Invalid password' })
     } catch (error) {
         next(error)
     }

@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 /**
  * @route "/user"
  * @method "POST"
- * @desc "A route to create a user."
+ * @description "A route to create a user."
  */
 userRouter.post('/', async (req, res, next) => {
     try {
@@ -38,15 +38,50 @@ userRouter.post('/', async (req, res, next) => {
             if (error.code == 'P2002') {
                 throw new Error("UNIQUE CONSTRAINT FAILED");
             } else
-                throw error;            
+                throw error;
         }
     } catch (error) {
         next(error);
     }
 });
 
-userRouter.get('/', passport.authenticate('local', {}) ,async (req, res) => {
-    res.send(req.user);
+/**
+ * @route '/user'
+ * @method GET
+ * @description Get data for a user.
+ */
+userRouter.get('/', passport.authenticate('bearer', { session: false }), async (req, res) => {
+    return res.send(req.user);
+})
+
+
+/**
+ * @route '/user/details
+ * @method POST
+ * @description A route to add more details about user.
+ */
+userRouter.post('/details', async (req, res, next) => {
+    if (req.user.role === 1) {
+        // User is Admin.
+        // TODO: Reserved for future.
+
+    } else if (req.user.role === 2) {
+        // User is Student.
+        const {
+            id,
+            User,
+            name,
+            phone,
+            institute,
+            branch,
+            standard,
+            intrests,
+            profile_picture,
+        } = req.body;
+    } else if (req.user.role === 3) {
+        // User is Teacher.
+
+    }
 })
 
 module.exports = userRouter;
